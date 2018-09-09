@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>micro dust graph</title>
+    <style>
+        *{margin: 0;padding: 0;font-family: sans-serif;}
+        html, body{background-color: #cbcbcb;overflow: hidden;}
+        #graph{background-color: #fff;border:5px solid #1565C0;position:absolute; top:50%; left:50%; transform: translate(-50%, -50%); display: block;}
+    </style>
+    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script>
+        var LastCount = 0;
+        $(document).ready(function() {
+var timer = setInterval( function () {
+
+
+     $.ajax({
+
+           type:"GET",
+
+           url:"http://192.168.35.16",
+       
+           dataType:"JSON", // 옵션이므로 JSON으로 받을게 아니면 안써도 됨
+
+           success : function(data) {
+            if(LastCount != data.variables.count){
+             LastCount = data.variables.count;   
+              console.log(data.variables);    
+            }
+                 // 통신이 성공적으로 이루어졌을 때 이 함수를 타게 된다.
+           
+                 // TODO
+
+           },
+           error : function(xhr, status, error) {
+
+                 alert("에러");
+
+           }
+
+     });
+},2000);
+
+});
+
+</script>
+</head>
+<body>
+    <canvas id="graph">Your browser doesn't support this.</canvas>
+</body>
+</html>

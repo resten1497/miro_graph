@@ -1,0 +1,88 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script  src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script>
+    var LastCount = 0;
+window.onload = function () {
+
+var dps = []; // dataPoints
+var chart = new CanvasJS.Chart("chartContainer", {
+	title :{
+		text: "Dynamic Data"
+	},
+	axisY: {
+		includeZero: false
+	},      
+	data: [{
+		type: "line",
+		dataPoints: dps
+	}]
+});
+
+var xVal = 0;
+var yVal = 100; 
+var updateInterval = 1000;
+var dataLength = 20; // number of dataPoints visible at any point
+
+var updateChart = function (count) {
+    $.ajax({
+
+           type:"GET",
+
+           url:"http://192.168.35.16",
+       
+           dataType:"JSON", // 옵션이므로 JSON으로 받을게 아니면 안써도 됨
+                
+           success : function(response) {
+            if(LastCount != response.variables.count){
+             LastCount = response.variables.count;   
+            var dust = response.variables.concentration;
+     
+            var now  = new Date();
+            var mm   = now.getMonth() + 1; // getMonth() is zero-based
+            var dd   = now.getDate();
+            var date = now.getFullYear()+"-"+(mm>9 ? '' : '0') + mm+"-"+(dd>9 ? '' : '0') + dd;
+            var time = now.toLocaleTimeString();
+	           count = count || 1;
+
+	       for (var j = 0; j < count; j++) {
+            yVal = dust;
+		  dps.push({
+			x: xVal,
+			y: yVal
+		  });
+		xVal++;
+	}
+
+	if (dps.length > dataLength) {
+		dps.shift();
+	}
+
+	chart.render();
+            }
+                
+             
+              //console.log(response.variables);    
+            
+                 // 통신이 성공적으로 이루어졌을 때 이 함수를 타게 된다.
+           
+         
+
+           }
+
+
+     });
+};
+
+updateChart(dataLength);
+setInterval(function(){updateChart()}, updateInterval);
+
+}
+</script>
+</head>
+<body>
+<div id="chartContainer" style="height: 370px; width:100%;"></div>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+</html>

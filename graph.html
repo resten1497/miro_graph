@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>micro dust graph</title>
+    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <style>
+        *{margin: 0;padding: 0;font-family: sans-serif;}
+        html, body{background-color: #cbcbcb;overflow: hidden;}
+        #graph{background-color: #fff;border:5px solid #1565C0;position:absolute; top:50%; left:50%; transform: translate(-50%, -50%); display: block;}
+    </style>
+    <script>
+        var data = [{}];
+        var LastCount = 0;
+//        for(var i=0; i<120; i++){
+//            var num  = Math.floor(Math.random() * 700) + 100;
+//            var now  = new Date();
+//            now.setMinutes(now.getMinutes()+i);
+//            
+//            var mm   = now.getMonth() + 1; // getMonth() is zero-based
+//            var dd   = now.getDate();
+//            var date = now.getFullYear()+"-"+(mm>9 ? '' : '0') + mm+"-"+(dd>9 ? '' : '0') + dd;
+//            
+//            var time = now.getHours()+":"+now.getMinutes()+":"+now.getSeconds();
+//            document.write('{ "date" : "'+date+'", "time" : "'+time+'", "dust" : '+num+' },');
+//        }
+        
+        // figure
+        var width   = 3000;
+        var height  = 800;
+        var extra_x = 90;
+        var extra_y = 60;
+        var init_x  = 0000;
+        var init_y  = 1000;
+        var scale   = 10;
+        var radius = 4;
+        
+        var color = [
+            "#FFEBEE",
+            "#FFCDD2",
+            "#EF9A9A",
+            "#E57373",
+            "#EF5350",
+            "#F44336",
+            "#E53935",
+            "#D32F2F",
+            "#C62828",
+            "#B71C1C"
+        ];
+        
+        window.onload = function(){
+            var can = document.getElementById("graph");
+            var ctx = can.getContext("2d");
+            
+            can.width  = width+extra_x*2;
+            can.height = height+extra_y*2;
+            can.style.width  = width+extra_x*2+"px";
+            can.style.height = height+extra_y*2+"px";
+            ctx.font="15px Arial";
+            ctx.textAlign = "center";
+            ctx.strokeStyle = "#000";
+            function draw(){
+                ctx.clearRect(0,0,width+extra_x*2,height+extra_y*2);
+                
+                //board
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.strokeStyle = "#000000";
+                ctx.rect(extra_x+30,40,width,height);
+                ctx.stroke();
+                ctx.closePath();
+                
+                ctx.strokeStyle = "#999999";
+                // vertical line
+                for(var i=0; i<=width; i+=scale){
+                    if(i+extra_x+30+init_x%scale<extra_x+30) continue;
+                    if(i+extra_x+30+init_x%scale>width+extra_x+30) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(i+extra_x+30+init_x%scale,40);
+                    ctx.lineTo(i+extra_x+30+init_x%scale,height+40);
+                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.fillText(i+init_x%scale-init_x,i+extra_x+30+init_x%scale,height+65);
+                }
+                
+                // horizontal line
+                for(var i=height; i>=0; i-=scale){
+                    if(i+40+init_y%scale<40) continue;
+                    if(i+40+init_y%scale>height+40) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(extra_x+30,i+40+init_y%scale);
+                    ctx.lineTo(width+extra_x+30,i+40+init_y%scale);
+                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.fillText(height-i-init_y%scale+init_y,extra_x-5,i+45+init_y%scale);
+                }
+                
+                // draw data
+                ctx.fillStyle   = "#2196F3";
+                ctx.strokeStyle = "#82B1FF";
+                ctx.lineWidth   = 2;
+                ctx.beginPath();
+                for(var i=0; i<data.length; i++){
+                    ctx.lineTo(i*scale+extra_x+30+init_x,height+40-data[i].dust+init_y);
+                }
+                ctx.stroke();
+                ctx.closePath();
+                for(var i=0; i<data.length; i++){
+                    ctx.beginPath();
+                    ctx.arc(i*scale+extra_x+30+init_x,height+40-data[i].dust+init_y,radius,0,2*Math.PI);
+                    ctx.fill();
+                    ctx.closePath();
+                }
+                
+                //
+                ctx.clearRect(0,0,extra_x+30,height+extra_y*2);
+                ctx.clearRect(0,0,extra_x*2+width,40);
+                ctx.clearRect(0,height+40,extra_x*2+width,height+extra_y*2);
+                ctx.clearRect(width+extra_x+30,0,extra_x*2+width,height+extra_y*2);
+                
+                //text
+                ctx.fillStyle = "#000000";
+                ctx.fillText("날짜",(width+extra_x*2)/2,height+extra_y*2-15);
+                ctx.save();
+                ctx.translate(30,(height+extra_y*2)/2);
+                ctx.rotate(-0.5*Math.PI);
+                ctx.fillText("먼지 농도",20,0);
+                ctx.restore();
+                for(var i=0; i<=width; i+=scale){
+                    if(i+extra_x+30+init_x%scale<extra_x+30) continue;
+                    if(i+extra_x+30+init_x%scale>width+extra_x+30) continue;
+                    var j = (i+init_x%scale-init_x)/scale;
+                    if(data[j] === undefined || j%3 != 1) continue;
+                    ctx.fillText(data[(i+init_x%scale-init_x)/scale].time,i+extra_x+30+init_x%scale,height+65);
+                }
+                for(var i=height; i>=0; i-=scale){
+                    if(i+40+init_y%scale<40) continue;
+                    if(i+40+init_y%scale>height+40) continue;
+                    ctx.fillText((height-i-init_y%scale+init_y),extra_x-5,i+45+init_y%scale);
+                }
+            }
+            draw();
+            
+            if (can.addEventListener){
+                // IE9, Chrome, Safari, Opera
+                can.addEventListener("mousewheel", MouseWheelHandler, false);
+                // Firefox
+                can.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+            }
+            // IE 6/7/8
+            else can.attachEvent("onmousewheel", MouseWheelHandler);
+            function MouseWheelHandler(e){
+                // cross-browser wheel delta
+                var e = window.event || e; // old IE support
+                var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+                if(delta == 1){
+                    //wheel up'
+                    scale+=5;
+                }else{
+                    //wheel down
+                    if(scale<10) return;
+                    scale-=5;
+                }
+                draw();
+                return false;
+            }
+            
+            var mouse_x    = null;
+            var mouse_y    = null;
+            var mouse_down = false;
+            can.addEventListener("mousedown",function(event){
+                mouse_down = true;
+                mouse_x = event.clientX-init_x;
+                mouse_y = event.clientY-init_y;
+            });
+            window.addEventListener("mouseup",function(){
+                mouse_down = false;
+            });
+            window.addEventListener("mousemove",function(event){
+                if(mouse_down){
+                    init_x = event.clientX - mouse_x;
+                    if(init_x >= 0) init_x = 0;
+                    init_y = event.clientY - mouse_y;
+                    if(init_y <= 0) init_y = 0;
+                    draw();
+                }
+            });
+            
+            setInterval(function(){
+                //var dust = Math.floor(Math.random() * 700) + 100;
+                
+            $.ajax({
+
+           type:"GET",
+
+           url:"http://192.168.35.16",
+       
+           dataType:"JSON", // 옵션이므로 JSON으로 받을게 아니면 안써도 됨
+                
+           success : function(response) {
+            if(LastCount != response.variables.count){
+             LastCount = response.variables.count;   
+            var dust = response.variables.concentration;
+     
+            var now  = new Date();
+            var mm   = now.getMonth() + 1; // getMonth() is zero-based
+            var dd   = now.getDate();
+            var date = now.getFullYear()+"-"+(mm>9 ? '' : '0') + mm+"-"+(dd>9 ? '' : '0') + dd;
+            var time = now.toLocaleTimeString();
+            data.push({ "date" : date, "time" : time, "dust" : dust });
+            draw();    
+            }
+                
+                console.log(data);
+              //console.log(response.variables);    
+            
+                 // 통신이 성공적으로 이루어졌을 때 이 함수를 타게 된다.
+           
+         
+
+           }
+
+
+     });
+            
+            },2000);
+        }
+    </script>
+</head>
+<body>
+    <canvas id="graph">Your browser doesn't support this.</canvas>
+</body>
+</html>
